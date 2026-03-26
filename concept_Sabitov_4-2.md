@@ -96,7 +96,7 @@
 | **Контекст** | Симулятор экосистемы "хищник-жертва" с нейросетевыми агентами и серверным хранением данных | Визуализирует динамику популяций через поведение MLP-агентов, сохраняет историю экспериментов в облачной БД | Локально на ПК пользователя + удаленный сервер (или localhost) | Студент/исследователь (пользователь), Разработчик (создатель) | Во время изучения моделей популяций и последующего анализа | Для интуитивного понимания сложных математических моделей и сохранения результатов экспериментов |
 | **Контейнер** | **Unity Client** - игровое приложение<br>**NOCODB** - сервер хранения данных (Backend API + Database) | Unity: C# скрипты, физика, UI, HTTP-клиент<br>NOCODB: REST API, SQLite/PostgreSQL | Windows/macOS (Unity)<br>Docker-контейнер (NOCODB) | Пользователь запускает Unity<br>Разработчик управляет NOCODB<br>Unity отправляет данные на NOCODB | При запуске .exe файла (Unity)<br>Постоянно (NOCODB)<br>В моменты сбора статистики (отправка данных) | Unity: визуализация и симуляция<br>NOCODB: сохранение, аналитика и экспорт данных экспериментов |
 | **Компонент** | **Unity Client:**<br>• SimulationManager - управление симуляцией<br>• NeuralNetworkService - работа с MLP<br>• EvolutionEngine - генетический алгоритм<br>• DataCollector - сбор статистики<br>• **APIClient** - отправка данных на NOCODB<br>• CreatureFactory - создание агентов<br><br>**NOCODB:**<br>• **Tables API** - прием данных<br>• **Authentication Service** - контроль доступа<br>• **Database Engine** - хранение (SQLite/Postgres)<br>• **Web UI** - просмотр данных | Unity: MonoBehaviour.Update(), корутины, HTTP-запросы<br>NOCODB: RESTful endpoints, JWT-токены, SQL-запросы | Внутри Unity Player (клиент)<br>В Docker-контейнере (сервер) | Unity: SimulationManager координирует<br>NOCODB: API обрабатывает запросы<br>DataCollector → APIClient → NOCODB | Каждый N-ный кадр симуляции сбор данных<br>Каждые K секунд отправка<br>При старте и завершении сессии | Unity: модульность системы<br>NOCODB: возможность накопления данных, возможность пост-анализа |
-| **Код** | **Unity:**<br>• `SimulationManager` - StartSimulation(), PauseSimulation()<br>• `CreatureFactory` - CreateHerbivore(), CreateCarnivore()<br>• `NeuralNetworkService` - ProcessInputs(), CreateNetwork()<br>• `EvolutionEngine` - EvolvePopulation(), MutateNetwork()<br>• `DataCollector` - RecordFrameData(), GetAgentSnapshots()<br>• **`APIClient` - SendSessionStart(), SendAgentBatch(), SendSessionEnd()**<br>• `Creature` - Perceive(), Decide(), Act()<br><br>**NOCODB (конфигурация):**<br>• **Таблица `simulation_sessions`** - id, start_time, end_time, config<br>• **Таблица `agent_snapshots`** - session_id, tick, type, pos_x, pos_y, health, energy<br>• **REST Endpoints** - POST /api/v2/tables/.../records | Unity: вызовы методов, наследование MonoBehaviour, `UnityWebRequest` для HTTP<br>NOCODB: встроенный REST API, автоматическая валидация схемы | Unity: `.cs` файлы в проекте<br>NOCODB: конфигурация через Web UI или REST API | Разработчик: код на C# и конфигурация NOCODB<br>Unity: выполнение в runtime<br>NOCODB: обработка запросов в реальном времени | Unity: согласно игровому циклу + асинхронные запросы<br>NOCODB: при поступлении HTTP-запросов | Unity: реализация функциональности модулей<br>NOCODB: структурированное хранение, возможность экспорта в CSV/JSON для научного анализа |
+| **Код** | **Unity:**<br>• `SimulationManager` - StartSimulation(), PauseSimulation()<br>• `CreatureFactory` - CreateHerbivore(), CreateCarnivore()<br>• `NeuralNetworkService` - ProcessInputs(), CreateNetwork()<br>• `EvolutionEngine` - EvolvePopulation(), MutateNetwork()<br>• `DataCollector` - RecordFrameData(), GetAgentSnapshots()<br>• **`APIClient` - SendSessionStart(), SendAgentBatch(), SendSessionEnd()**<br>• `Creature` - Perceive(), Decide(), Act()<br><br>**NOCODB (конфигурация):**<br>• **Таблица `SimulationSessions`** - id, start_time, end_time, config<br>• **Таблица `AgentEnviroment`** - id, session_id, simulation_tick, agent_type, position_x, position_y, health, energy, age, nn_weights_hash<br>• **REST Endpoints** - POST /api/v2/tables/.../records | Unity: вызовы методов, наследование MonoBehaviour, `UnityWebRequest` для HTTP<br>NOCODB: встроенный REST API, автоматическая валидация схемы | Unity: `.cs` файлы в проекте<br>NOCODB: конфигурация через Web UI или REST API | Разработчик: код на C# и конфигурация NOCODB<br>Unity: выполнение в runtime<br>NOCODB: обработка запросов в реальном времени | Unity: согласно игровому циклу + асинхронные запросы<br>NOCODB: при поступлении HTTP-запросов | Unity: реализация функциональности модулей<br>NOCODB: структурированное хранение, возможность экспорта в CSV/JSON для научного анализа |
 
 ### 3.6 Матрица Захмана
 
@@ -108,6 +108,50 @@
 | **Технология** (Компоненты) | Классы Creature, MLP, PopulationData; структуры векторов | Методы Forward(), Evolve(), Perceive(), Decide(), Act() | Unity GameObject-компоненты, C# скрипты, UI Canvas | Компоненты взаимодействуют через API, наследование, события | Update/FixedUpdate циклы, корутины для долгих операций | Эффективная реализация сложных алгоритмов в реальном времени |
 | **Детализация** (Код) | Поля health, energy, weights [ ][ ]; свойства Position, Velocity | MLP.Forward(inputs), EvolutionEngine.Mutate(), Creature.Act() | Конкретные .cs файлы в проекте Unity, префабы агентов | Разработчик: код на C#; Пользователь: клики и настройки ползунков | Точное время выполнения методов, порядок инициализации | Оптимизация производительности и точности вычислений |
 | **Функционирование** (Инстанс) | Текущие значения популяций, конкретные веса MLP, live-графики | Реальная симуляция с конкретными параметрами, обработка ввода | Запущенный экземпляр приложения, активная сцена Unity | Пользователь наблюдает и экспериментирует; система исполняет | Момент времени в симуляции, частота кадров, время сессии | Непосредственное получение опыта и инсайтов о системной динамике |
+
+### 3.7 MVP UI и серверной части
+
+**MVP Пользовательского интерфейса:**
+
+Цель MVP — возможность пользователя наблюдать за симуляцией и видеть ключевую обратную связь. Минимальный набор экранов и элементов:
+* Главное окно симуляции (Сцена):
+  *  Возможность выбрать исследуемого агента
+  *  Поле для отображения агентов (хищники, травоядные, еда, препятствия, область видимости выбранного агента).
+  *  Камера, которую можно двигать/приближать (базовая навигация).
+* Панель управления (Canvas):
+  *  Кнопки: Play (Запуск времени), Pause (Пауза), Reset (Сброс симуляции).
+  *  Слайдер Simulation Speed (скорость времени от 0.5x до 5x).
+  *  Поля для внесения начальных условий: Start Herbivores population (начальная численность травоядных), Start Carnivores population (начальная численность плотоядных), Food respawn timer (время до нового появления еды), Food amount (количество появляющийся еды за 1 цикл).
+* Окно статистики (Графики):
+  *  Компонент, отображающий график (Line Chart) динамики популяций в реальном времени. Достаточно двух линий: зеленой (травоядные) и красной (хищники).
+
+**MVP Серверной части (NOCODB):**
+
+Схема данных (Таблицы NOCODB):
+* Таблица SimulationSessions:
+  *  id (PK)
+  *  start_time (DateTime)
+  *  end_time (DateTime)
+  *  config_params (JSON) — хранение параметров, с которыми запускалась симуляция (скорость еды, плодовитость и т.д.).
+  *  user (Text) — поле для заметок.
+
+* Таблица AgentEnviroment:
+  *  id (PK)
+  *  session_id (FK -> SimulationSessions)
+  *  simulation_tick (Integer) — номер такта симуляции.
+  *  agent_type (Text: "Herbivore" / "Carnivore")
+  *  agent_id (Integer) — уникальный ID агента в рамках сессии.
+  *  position_x, position_y (Float)
+  *  health (Float)
+  *  energy (Float)
+  *  age (Float)
+  *  nn_weights_hash (Text) — хеш весов нейросети для отслеживания эволюции.
+
+**Взаимодействие Unity с NOCODB:**
+
+Unity будет отправлять POST-запросы на REST API NOCODB в двух случаях:
+*  При старте сессии (создание записи в SimulationSessions).
+*  Каждые N секунд — отправка данных в AgentSnapshots.
 
 ## 4. Взаимодействие с другими системами
 
